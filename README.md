@@ -52,8 +52,8 @@ If you are on macOS and already use Terminal, this repo includes helper scripts.
 First-time setup:
 
 ```bash
-git clone https://github.com/mayank-srm/trading_view.git
-cd trading_view
+git clone https://github.com/appuo-in/ChartIQ.git
+cd ChartIQ
 scripts/push_to_tradingview.sh --paste
 ```
 

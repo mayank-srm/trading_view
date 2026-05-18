@@ -947,7 +947,7 @@ const ClosingScene = () => {
       >
         <div>
           <div style={{color: colors.green, fontFamily: mono, fontSize: 25, fontWeight: 850}}>
-            github.com/mayank-srm/trading_view
+            github.com/appuo-in/ChartIQ
           </div>
           <div style={{color: colors.muted, fontSize: 21, marginTop: 7}}>
             Decision support only. Not financial advice.
