@@ -17,5 +17,5 @@ build/
 coverage/
 node_modules/
 
-# Render preview frames
-video/instagram-reel/out/*.png
+# Local video/render workspace
+video/
