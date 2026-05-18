@@ -469,7 +469,7 @@ const HookScene = () => {
         eyebrow="NEW TRADINGVIEW TOOL"
         title={
           <>
-            Appu came up
+            AppUo came up
             <br />
             with a new
             <br />
