@@ -6,28 +6,26 @@ import {
   interpolate,
   staticFile,
   useCurrentFrame,
-  useVideoConfig,
 } from 'remotion';
 
-const easeOut = Easing.bezier(0.16, 1, 0.3, 1);
-const easeInOut = Easing.bezier(0.45, 0, 0.55, 1);
-
 const colors = {
-  bg: '#0b1017',
-  panel: '#151b24',
+  bg: '#080d13',
+  ink: '#f7f8f4',
+  muted: '#b5bdc9',
+  quiet: '#7d8796',
+  panel: '#141b25',
   panel2: '#202735',
-  line: '#334050',
-  text: '#f7f7f4',
-  muted: '#aab2bf',
-  dim: '#6f7886',
+  line: '#354253',
+  grid: 'rgba(255,255,255,0.08)',
+  green: '#00e884',
   amber: '#ff9f0a',
-  mint: '#00e884',
   red: '#ff4d64',
-  cyan: '#4cc9f0',
-  violet: '#8b5cf6',
+  cyan: '#52d7ff',
+  blue: '#5b8cff',
 };
 
-const font = 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+const font =
+  'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const mono = '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
 
 const clamp = {
@@ -35,31 +33,23 @@ const clamp = {
   extrapolateRight: 'clamp' as const,
 };
 
-const appear = (frame: number, start: number, duration: number) =>
+const easeOut = Easing.bezier(0.16, 1, 0.3, 1);
+const easeInOut = Easing.bezier(0.45, 0, 0.55, 1);
+
+const fade = (frame: number, start: number, duration: number) =>
   interpolate(frame, [start, start + duration], [0, 1], {
     ...clamp,
     easing: easeOut,
   });
 
-const scene = (frame: number, start: number, end: number, fade = 18) => {
-  const fadeIn = interpolate(frame, [start, start + fade], [0, 1], clamp);
-  const fadeOut = interpolate(frame, [end - fade, end], [1, 0], clamp);
+const scene = (frame: number, start: number, end: number, edge = 18) => {
+  const fadeIn = interpolate(frame, [start, start + edge], [0, 1], clamp);
+  const fadeOut = interpolate(frame, [end - edge, end], [1, 0], clamp);
   return Math.min(fadeIn, fadeOut);
 };
 
-const slideY = (progress: number, distance: number) =>
+const y = (progress: number, distance: number) =>
   interpolate(progress, [0, 1], [distance, 0], clamp);
-
-const pillStyle = (accent: string): React.CSSProperties => ({
-  border: `1px solid ${accent}55`,
-  color: accent,
-  borderRadius: 999,
-  padding: '10px 16px',
-  fontSize: 24,
-  fontWeight: 760,
-  letterSpacing: 1.8,
-  background: `${accent}13`,
-});
 
 const Card = ({
   children,
@@ -70,10 +60,10 @@ const Card = ({
 }) => (
   <div
     style={{
-      borderRadius: 32,
+      borderRadius: 30,
       border: `1px solid ${colors.line}`,
       background: `linear-gradient(145deg, ${colors.panel}, ${colors.panel2})`,
-      boxShadow: '0 28px 80px rgba(0, 0, 0, 0.42)',
+      boxShadow: '0 30px 90px rgba(0, 0, 0, 0.42)',
       ...style,
     }}
   >
@@ -81,15 +71,31 @@ const Card = ({
   </div>
 );
 
-const Background = () => {
+const ChartBackdrop = () => {
   const frame = useCurrentFrame();
-  const drift = interpolate(frame, [0, 450], [0, -90], clamp);
+  const drift = interpolate(frame, [0, 450], [0, -60], clamp);
+  const candles = [
+    [120, 104, 60, colors.green],
+    [178, 116, 88, colors.red],
+    [236, 96, 72, colors.green],
+    [294, 132, 96, colors.green],
+    [352, 118, 60, colors.red],
+    [410, 84, 116, colors.green],
+    [468, 108, 84, colors.green],
+    [526, 92, 136, colors.red],
+    [584, 148, 80, colors.green],
+    [642, 124, 112, colors.green],
+    [700, 88, 76, colors.red],
+    [758, 102, 128, colors.green],
+    [816, 76, 104, colors.green],
+    [874, 114, 72, colors.red],
+  ] as const;
 
   return (
     <AbsoluteFill
       style={{
         background:
-          'linear-gradient(160deg, #0b1017 0%, #101722 42%, #171923 100%)',
+          'linear-gradient(160deg, #080d13 0%, #101722 48%, #161920 100%)',
         overflow: 'hidden',
       }}
     >
@@ -97,9 +103,9 @@ const Background = () => {
         style={{
           position: 'absolute',
           inset: 0,
-          opacity: 0.28,
+          opacity: 0.34,
           backgroundImage:
-            'linear-gradient(#ffffff12 1px, transparent 1px), linear-gradient(90deg, #ffffff12 1px, transparent 1px)',
+            'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)',
           backgroundSize: '90px 90px',
           transform: `translateY(${drift}px)`,
         }}
@@ -107,22 +113,52 @@ const Background = () => {
       <div
         style={{
           position: 'absolute',
-          left: -120,
-          top: 140,
-          width: 1320,
+          left: 70,
+          right: 70,
+          top: 196,
           height: 520,
-          transform: 'rotate(-10deg)',
+          opacity: 0.28,
+        }}
+      >
+        {candles.map(([left, top, height, color], index) => {
+          const p = fade(frame, 12 + index * 3, 18);
+          return (
+            <div
+              key={`${left}-${top}`}
+              style={{
+                position: 'absolute',
+                left,
+                top,
+                width: 20,
+                height,
+                borderRadius: 8,
+                background: color,
+                opacity: p,
+                boxShadow: `0 0 28px ${color}55`,
+              }}
+            />
+          );
+        })}
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          left: -120,
+          right: -120,
+          top: 260,
+          height: 440,
+          transform: 'rotate(-8deg)',
           background:
-            'linear-gradient(90deg, transparent, rgba(76, 201, 240, 0.16), rgba(255, 159, 10, 0.14), transparent)',
-          filter: 'blur(6px)',
+            'linear-gradient(90deg, transparent, rgba(82,215,255,0.16), rgba(255,159,10,0.13), transparent)',
+          filter: 'blur(8px)',
         }}
       />
       <div
         style={{
           position: 'absolute',
-          inset: 64,
+          inset: 58,
+          borderRadius: 56,
           border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 54,
         }}
       />
     </AbsoluteFill>
@@ -133,277 +169,324 @@ const Header = () => (
   <div
     style={{
       position: 'absolute',
-      top: 72,
-      left: 72,
-      right: 72,
+      left: 70,
+      right: 70,
+      top: 66,
       display: 'flex',
-      alignItems: 'center',
       justifyContent: 'space-between',
-      color: colors.text,
+      alignItems: 'center',
       fontFamily: font,
+      color: colors.ink,
     }}
   >
-    <div style={{fontSize: 28, fontWeight: 780}}>NIFTY Pro v2.3</div>
-    <div style={{display: 'flex', gap: 12}}>
-      <div style={pillStyle(colors.mint)}>OPEN SOURCE</div>
-      <div style={pillStyle(colors.amber)}>AUTO SYNC</div>
+    <div style={{fontSize: 28, fontWeight: 850}}>NIFTY Pro Decision Map</div>
+    <div
+      style={{
+        borderRadius: 999,
+        border: `1px solid ${colors.green}66`,
+        color: colors.green,
+        background: `${colors.green}13`,
+        padding: '10px 16px',
+        fontSize: 22,
+        fontWeight: 850,
+        letterSpacing: 1.3,
+      }}
+    >
+      TRADINGVIEW PINE
     </div>
   </div>
 );
 
-const PhoneChart = ({
-  progress,
-  compact = false,
+type DashboardMode = 'call' | 'wait' | 'noTrade';
+
+const dashboardCopy: Record<
+  DashboardMode,
+  {
+    state: string;
+    color: string;
+    check: string;
+    market: string;
+    edge: string;
+    bias: string;
+    vwap: string;
+    ema: string;
+    adx: string;
+    atr: string;
+    volume: string;
+    vix: string;
+    news: string;
+    call: string;
+    put: string;
+  }
+> = {
+  call: {
+    state: 'CALL READY',
+    color: colors.green,
+    check: 'Clean setup',
+    market: 'Tradable',
+    edge: 'Bullish edge',
+    bias: 'Bullish',
+    vwap: 'Above',
+    ema: '9 > 21 rising',
+    adx: '31 strong / +DI',
+    atr: 'Tradable',
+    volume: 'Confirmed',
+    vix: 'Normal',
+    news: 'Neutral watch',
+    call: 'Ready - score 84',
+    put: 'Blocked - opposite edge',
+  },
+  wait: {
+    state: 'WAIT',
+    color: colors.amber,
+    check: 'Need confirmation',
+    market: 'Mixed',
+    edge: 'Not enough edge',
+    bias: 'Neutral',
+    vwap: 'Near VWAP',
+    ema: 'Flat',
+    adx: '18 building',
+    atr: 'Tradable',
+    volume: 'Average',
+    vix: 'Normal',
+    news: 'No major impact',
+    call: 'Wait - no clean breakout',
+    put: 'Wait - no clean breakdown',
+  },
+  noTrade: {
+    state: 'NO TRADE',
+    color: colors.red,
+    check: 'Risk block active',
+    market: 'Risky',
+    edge: 'None',
+    bias: 'Mixed',
+    vwap: 'Extended',
+    ema: 'Chasing',
+    adx: 'Weak',
+    atr: 'Unstable',
+    volume: 'Weak',
+    vix: 'Risk spike',
+    news: 'High impact',
+    call: 'Blocked - risk first',
+    put: 'Blocked - risk first',
+  },
+};
+
+const Row = ({
+  label,
+  value,
+  color = colors.muted,
 }: {
+  label: string;
+  value: string;
+  color?: string;
+}) => (
+  <div
+    style={{
+      display: 'grid',
+      gridTemplateColumns: '178px 1fr',
+      alignItems: 'center',
+      minHeight: 50,
+      borderTop: '1px solid rgba(255,255,255,0.09)',
+      fontFamily: font,
+    }}
+  >
+    <div
+      style={{
+        color: colors.ink,
+        fontSize: 24,
+        fontWeight: 820,
+        textAlign: 'center',
+      }}
+    >
+      {label}
+    </div>
+    <div
+      style={{
+        color,
+        fontSize: 24,
+        fontWeight: 760,
+        textAlign: 'center',
+      }}
+    >
+      {value}
+    </div>
+  </div>
+);
+
+const Dashboard = ({
+  mode,
+  progress,
+  style,
+}: {
+  mode: DashboardMode;
   progress: number;
-  compact?: boolean;
+  style?: React.CSSProperties;
 }) => {
-  const lift = slideY(progress, 70);
+  const copy = dashboardCopy[mode];
   const scale = interpolate(progress, [0, 1], [0.94, 1], clamp);
 
   return (
     <Card
       style={{
-        position: 'absolute',
-        width: compact ? 660 : 790,
-        height: compact ? 520 : 670,
-        right: compact ? 58 : 42,
-        bottom: compact ? 188 : 206,
+        width: 846,
         overflow: 'hidden',
         opacity: progress,
-        transform: `translateY(${lift}px) scale(${scale})`,
+        transform: `translateY(${y(progress, 64)}px) scale(${scale})`,
+        ...style,
       }}
     >
       <div
         style={{
-          height: 54,
-          display: 'flex',
+          display: 'grid',
+          gridTemplateColumns: '240px 1fr',
           alignItems: 'center',
-          gap: 11,
-          padding: '0 24px',
-          borderBottom: `1px solid ${colors.line}`,
+          minHeight: 82,
+          borderBottom: '1px solid rgba(255,255,255,0.12)',
         }}
       >
-        <span style={{width: 13, height: 13, borderRadius: 99, background: colors.red}} />
-        <span style={{width: 13, height: 13, borderRadius: 99, background: colors.amber}} />
-        <span style={{width: 13, height: 13, borderRadius: 99, background: colors.mint}} />
-        <span
+        <div
           style={{
-            marginLeft: 18,
-            color: colors.muted,
-            fontSize: 20,
-            fontFamily: mono,
+            color: colors.ink,
+            fontFamily: font,
+            fontSize: 28,
+            fontWeight: 860,
+            textAlign: 'center',
           }}
         >
-          TradingView / Pine Editor
-        </span>
+          NIFTY PRO v2.3
+        </div>
+        <div
+          style={{
+            background: copy.color,
+            color: mode === 'wait' ? colors.bg : colors.bg,
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: font,
+            fontSize: 34,
+            fontWeight: 920,
+            letterSpacing: 1,
+          }}
+        >
+          {copy.state}
+        </div>
       </div>
-      <Img
-        src={staticFile('nifty_decision_map.png')}
-        style={{
-          width: '100%',
-          height: 'calc(100% - 54px)',
-          objectFit: 'cover',
-          objectPosition: 'center center',
-          opacity: 0.92,
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          left: 28,
-          bottom: 28,
-          right: 28,
-          borderRadius: 22,
-          background: 'rgba(11, 16, 23, 0.82)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          padding: '18px 22px',
-          fontFamily: font,
-          color: colors.text,
-          fontSize: 25,
-          fontWeight: 780,
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}
-      >
-        <span>Paste</span>
-        <span style={{color: colors.mint}}>Save</span>
-        <span style={{color: colors.amber}}>Apply</span>
-      </div>
+      <Row label="CHECK" value={copy.check} color={copy.color} />
+      <Row label="MARKET" value={copy.market} color={mode === 'call' ? colors.green : mode === 'wait' ? colors.amber : colors.red} />
+      <Row label="EDGE" value={copy.edge} color={mode === 'call' ? colors.green : colors.muted} />
+      <Row label="BIAS" value={copy.bias} color={mode === 'call' ? colors.green : colors.amber} />
+      <Row label="VWAP" value={copy.vwap} color={mode === 'noTrade' ? colors.amber : colors.green} />
+      <Row label="EMA" value={copy.ema} color={mode === 'call' ? colors.green : colors.muted} />
+      <Row label="ADX/DMI" value={copy.adx} color={mode === 'call' ? colors.green : colors.amber} />
+      <Row label="ATR" value={copy.atr} color={mode === 'noTrade' ? colors.red : colors.green} />
+      <Row label="VOLUME" value={copy.volume} color={mode === 'call' ? colors.green : colors.amber} />
+      <Row label="VIX" value={copy.vix} color={mode === 'noTrade' ? colors.red : colors.muted} />
+      <Row label="NEWS" value={copy.news} color={mode === 'noTrade' ? colors.red : colors.muted} />
+      <Row label="CALL" value={copy.call} color={mode === 'call' ? colors.green : colors.muted} />
+      <Row label="PUT" value={copy.put} color={colors.muted} />
     </Card>
   );
 };
 
-const HeroScene = () => {
-  const frame = useCurrentFrame();
-  const title = appear(frame, 6, 34);
-  const chart = appear(frame, 44, 38);
-
-  return (
-    <AbsoluteFill style={{opacity: scene(frame, 0, 138), fontFamily: font}}>
-      <div
-        style={{
-          position: 'absolute',
-          left: 72,
-          top: 260,
-          width: 760,
-          color: colors.text,
-          opacity: title,
-          transform: `translateY(${slideY(title, 54)}px)`,
-        }}
-      >
-        <div
-          style={{
-            color: colors.amber,
-            fontSize: 34,
-            fontWeight: 820,
-            marginBottom: 28,
-            letterSpacing: 2,
-          }}
-        >
-          NEW FEATURE
-        </div>
-        <div
-          style={{
-            fontSize: 100,
-            lineHeight: 0.96,
-            fontWeight: 900,
-            letterSpacing: 0,
-          }}
-        >
-          Auto-push Pine updates to TradingView
-        </div>
-        <div
-          style={{
-            marginTop: 38,
-            color: colors.muted,
-            fontSize: 34,
-            lineHeight: 1.28,
-            fontWeight: 580,
-            width: 690,
-          }}
-        >
-          Save locally. The watcher copies, activates, pastes, saves, and applies.
-        </div>
-      </div>
-      <PhoneChart progress={chart} />
-    </AbsoluteFill>
-  );
-};
-
-const CodeLine = ({
-  text,
-  color = colors.muted,
-  delay,
+const Caption = ({
+  eyebrow,
+  title,
+  body,
+  start,
+  width = 850,
 }: {
-  text: string;
-  color?: string;
-  delay: number;
+  eyebrow?: string;
+  title: React.ReactNode;
+  body?: string;
+  start: number;
+  width?: number;
 }) => {
   const frame = useCurrentFrame();
-  const p = appear(frame, delay, 15);
+  const p = fade(frame, start, 24);
 
   return (
     <div
       style={{
+        position: 'absolute',
+        left: 72,
+        top: 180,
+        width,
         opacity: p,
-        transform: `translateX(${interpolate(p, [0, 1], [-28, 0], clamp)}px)`,
-        color,
-        fontFamily: mono,
-        fontSize: 24,
-        lineHeight: 1.5,
-        whiteSpace: 'pre',
+        transform: `translateY(${y(p, 50)}px)`,
+        fontFamily: font,
+        color: colors.ink,
       }}
     >
-      {text}
+      {eyebrow ? (
+        <div
+          style={{
+            color: colors.amber,
+            fontSize: 28,
+            fontWeight: 900,
+            marginBottom: 24,
+            letterSpacing: 2,
+          }}
+        >
+          {eyebrow}
+        </div>
+      ) : null}
+      <div
+        style={{
+          fontSize: 84,
+          lineHeight: 0.98,
+          fontWeight: 940,
+          letterSpacing: 0,
+        }}
+      >
+        {title}
+      </div>
+      {body ? (
+        <div
+          style={{
+            marginTop: 28,
+            color: colors.muted,
+            fontSize: 31,
+            lineHeight: 1.28,
+            fontWeight: 620,
+          }}
+        >
+          {body}
+        </div>
+      ) : null}
     </div>
   );
 };
 
-const WatcherScene = () => {
+const HookScene = () => {
   const frame = useCurrentFrame();
-  const p = scene(frame, 118, 264);
-  const cardIn = appear(frame, 126, 24);
-  const pulse = interpolate(Math.sin((frame - 168) / 8), [-1, 1], [0.35, 1], clamp);
+  const opacity = scene(frame, 0, 104);
 
   return (
-    <AbsoluteFill style={{opacity: p, fontFamily: font}}>
-      <div
-        style={{
-          position: 'absolute',
-          left: 72,
-          top: 196,
-          right: 72,
-          color: colors.text,
-        }}
-      >
-        <div style={{fontSize: 72, lineHeight: 1, fontWeight: 900}}>
-          Make one edit.
-          <br />
-          Watch it ship.
-        </div>
-        <div style={{fontSize: 30, color: colors.muted, marginTop: 22}}>
-          The watcher keeps the script and chart in sync while you work.
-        </div>
-      </div>
-
-      <Card
-        style={{
-          position: 'absolute',
-          left: 72,
-          right: 72,
-          top: 470,
-          height: 455,
-          padding: 34,
-          opacity: cardIn,
-          transform: `translateY(${slideY(cardIn, 52)}px)`,
-        }}
-      >
-        <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 26}}>
-          <div style={{fontFamily: mono, color: colors.cyan, fontSize: 25}}>
-            trading-setups/nifty_pro_decision_map_v2_indicator.pine
-          </div>
-          <div
-            style={{
-              color: colors.mint,
-              fontSize: 23,
-              fontWeight: 780,
-              opacity: pulse,
-            }}
-          >
-            SAVED
-          </div>
-        </div>
-        <CodeLine text={'//@version=6'} color={colors.dim} delay={142} />
-        <CodeLine text={'indicator("NIFTY Pro Decision Map v2.3", overlay=true)'} delay={150} />
-        <CodeLine text={'noTradeOverride = sessionBlock or eventMode'} color={colors.amber} delay={158} />
-        <CodeLine text={'riskText = f_reasons(vwapExtended, "Extended", vixRisk, "VIX")'} delay={166} />
-        <CodeLine text={'callReadyAlert = stateChanged and state == "CALL READY"'} color={colors.mint} delay={174} />
-        <CodeLine text={'putReadyAlert = stateChanged and state == "PUT READY"'} color={colors.cyan} delay={182} />
-      </Card>
-
-      <Card
-        style={{
-          position: 'absolute',
-          left: 92,
-          right: 92,
-          bottom: 280,
-          padding: '28px 32px',
-          opacity: appear(frame, 196, 25),
-        }}
-      >
-        <div style={{fontFamily: mono, fontSize: 28, color: colors.text}}>
-          <span style={{color: colors.mint}}>$</span> scripts/watch_and_push_to_tradingview.sh
-        </div>
-        <div style={{fontFamily: mono, marginTop: 18, fontSize: 23, color: colors.muted}}>
-          Watching file changes - auto paste / save / apply
-        </div>
-      </Card>
+    <AbsoluteFill style={{opacity}}>
+      <Caption
+        eyebrow="FOR NIFTY INTRADAY"
+        title={
+          <>
+            Know the trade state
+            <br />
+            before you enter.
+          </>
+        }
+        body="Stop jumping between indicators. See the market, edge, risk, and final action in one clean TradingView panel."
+        start={8}
+      />
+      <Dashboard
+        mode="wait"
+        progress={fade(frame, 36, 32)}
+        style={{position: 'absolute', left: 116, bottom: 158}}
+      />
     </AbsoluteFill>
   );
 };
 
-const Step = ({
+const FactorChip = ({
   label,
   detail,
   accent,
@@ -415,227 +498,512 @@ const Step = ({
   index: number;
 }) => {
   const frame = useCurrentFrame();
-  const p = appear(frame, 270 + index * 13, 20);
+  const p = fade(frame, 112 + index * 9, 20);
 
   return (
     <div
       style={{
         opacity: p,
-        transform: `translateY(${slideY(p, 38)}px)`,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 20,
+        transform: `translateY(${y(p, 34)}px)`,
+        borderRadius: 24,
+        border: `1px solid ${accent}66`,
+        background: `${accent}14`,
+        padding: '22px 24px',
+        minHeight: 126,
       }}
     >
-      <div
-        style={{
-          width: 74,
-          height: 74,
-          borderRadius: 23,
-          background: `${accent}24`,
-          border: `1px solid ${accent}77`,
-          color: accent,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 32,
-          fontWeight: 900,
-          fontFamily: font,
-        }}
-      >
-        {index + 1}
-      </div>
-      <div>
-        <div style={{color: colors.text, fontSize: 34, fontWeight: 860}}>{label}</div>
-        <div style={{color: colors.muted, fontSize: 24, marginTop: 4}}>{detail}</div>
+      <div style={{color: accent, fontSize: 28, fontWeight: 900}}>{label}</div>
+      <div style={{color: colors.muted, fontSize: 22, marginTop: 8, lineHeight: 1.22}}>
+        {detail}
       </div>
     </div>
   );
 };
 
-const PipelineScene = () => {
+const FactorsScene = () => {
   const frame = useCurrentFrame();
-  const p = scene(frame, 248, 374);
-  const progress = interpolate(frame, [270, 342], [0, 1], {...clamp, easing: easeInOut});
+  const opacity = scene(frame, 88, 206);
+  const factors = [
+    ['VWAP', 'value location', colors.green],
+    ['EMA', 'trend alignment', colors.cyan],
+    ['ADX/DMI', 'direction strength', colors.blue],
+    ['ATR', 'range quality', colors.amber],
+    ['Volume', 'participation', colors.green],
+    ['VIX + News', 'risk context', colors.red],
+  ] as const;
 
   return (
-    <AbsoluteFill style={{opacity: p, fontFamily: font}}>
-      <div style={{position: 'absolute', top: 180, left: 72, right: 72}}>
-        <div style={{fontSize: 70, fontWeight: 900, color: colors.text, lineHeight: 1}}>
-          Fully automated
-          <br />
-          TradingView flow
-        </div>
-      </div>
-
-      <Card
-        style={{
-          position: 'absolute',
-          left: 72,
-          top: 412,
-          width: 936,
-          height: 350,
-          padding: 34,
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            left: 92,
-            right: 92,
-            top: 174,
-            height: 8,
-            borderRadius: 99,
-            background: colors.line,
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            left: 92,
-            top: 174,
-            width: interpolate(progress, [0, 1], [0, 752], clamp),
-            height: 8,
-            borderRadius: 99,
-            background: `linear-gradient(90deg, ${colors.mint}, ${colors.cyan}, ${colors.amber})`,
-          }}
-        />
-        {[
-          ['File', colors.mint],
-          ['Clipboard', colors.cyan],
-          ['Editor', colors.violet],
-          ['Apply', colors.amber],
-        ].map(([label, accent], index) => {
-          const stepP = appear(frame, 266 + index * 17, 18);
-          return (
-            <div
-              key={label}
-              style={{
-                position: 'absolute',
-                left: 72 + index * 248,
-                top: 102,
-                width: 130,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                opacity: stepP,
-              }}
-            >
-              <div
-                style={{
-                  width: 82,
-                  height: 82,
-                  borderRadius: 28,
-                  border: `2px solid ${accent}`,
-                  background: `${accent}22`,
-                  boxShadow: `0 0 34px ${accent}33`,
-                }}
-              />
-              <div style={{marginTop: 24, color: colors.text, fontSize: 25, fontWeight: 820}}>
-                {label}
-              </div>
-            </div>
-          );
-        })}
-      </Card>
-
+    <AbsoluteFill style={{opacity, fontFamily: font}}>
+      <Caption
+        eyebrow="ONE-PLACE CHECK"
+        title={
+          <>
+            All the filters
+            <br />
+            traders actually scan.
+          </>
+        }
+        body="The dashboard compresses the noisy checklist into a readable setup state."
+        start={96}
+      />
       <div
         style={{
           position: 'absolute',
-          left: 92,
-          right: 92,
-          bottom: 230,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 28,
+          left: 72,
+          right: 72,
+          bottom: 210,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 22,
         }}
       >
-        <Step label="Copy latest Pine" detail="pbcopy from the single source file" accent={colors.mint} index={0} />
-        <Step label="Activate TradingView" detail="targets the already-running Mac app" accent={colors.cyan} index={1} />
-        <Step label="Paste, save, apply" detail="no prompt when --auto is enabled" accent={colors.amber} index={2} />
+        {factors.map(([label, detail, accent], index) => (
+          <FactorChip
+            key={label}
+            label={label}
+            detail={detail}
+            accent={accent}
+            index={index}
+          />
+        ))}
       </div>
     </AbsoluteFill>
   );
 };
 
-const ClosingScene = () => {
+const StateCard = ({
+  mode,
+  label,
+  detail,
+  start,
+  top,
+}: {
+  mode: DashboardMode;
+  label: string;
+  detail: string;
+  start: number;
+  top: number;
+}) => {
   const frame = useCurrentFrame();
-  const p = scene(frame, 356, 450, 18);
-  const headline = appear(frame, 366, 28);
-  const command = appear(frame, 392, 24);
+  const copy = dashboardCopy[mode];
+  const p = fade(frame, start, 22);
 
   return (
-    <AbsoluteFill style={{opacity: p, fontFamily: font}}>
-      <PhoneChart progress={appear(frame, 368, 30)} compact />
+    <div
+      style={{
+        position: 'absolute',
+        left: 72,
+        right: 72,
+        top,
+        opacity: p,
+        transform: `translateX(${interpolate(p, [0, 1], [-46, 0], clamp)}px)`,
+        display: 'grid',
+        gridTemplateColumns: '250px 1fr',
+        alignItems: 'center',
+        gap: 22,
+      }}
+    >
+      <div
+        style={{
+          height: 94,
+          borderRadius: 26,
+          background: copy.color,
+          color: colors.bg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 30,
+          fontWeight: 940,
+          fontFamily: font,
+        }}
+      >
+        {copy.state}
+      </div>
+      <div>
+        <div style={{fontSize: 34, color: colors.ink, fontWeight: 900}}>{label}</div>
+        <div style={{fontSize: 25, color: colors.muted, marginTop: 5}}>{detail}</div>
+      </div>
+    </div>
+  );
+};
+
+const DecisionScene = () => {
+  const frame = useCurrentFrame();
+  const opacity = scene(frame, 190, 322);
+  const dashboardMode: DashboardMode =
+    frame < 236 ? 'call' : frame < 278 ? 'wait' : 'noTrade';
+
+  return (
+    <AbsoluteFill style={{opacity, fontFamily: font}}>
+      <Caption
+        eyebrow="CLEAR STATES"
+        title={
+          <>
+            Ready. Wait.
+            <br />
+            Or no trade.
+          </>
+        }
+        body="It is not trying to predict everything. It helps you avoid forcing bad entries."
+        start={198}
+      />
+      <Dashboard
+        mode={dashboardMode}
+        progress={fade(frame, 222, 26)}
+        style={{position: 'absolute', left: 116, top: 920, transformOrigin: 'top center'}}
+      />
+      <StateCard
+        mode="call"
+        label="Take only clean momentum"
+        detail="When trend, value, strength, and risk align."
+        start={226}
+        top={516}
+      />
+      <StateCard
+        mode="wait"
+        label="Stay patient in mixed markets"
+        detail="No edge means no forced trade."
+        start={250}
+        top={636}
+      />
+      <StateCard
+        mode="noTrade"
+        label="Respect risk blocks"
+        detail="News, weak structure, or VIX risk stays visible."
+        start={274}
+        top={756}
+      />
+    </AbsoluteFill>
+  );
+};
+
+const Benefit = ({
+  title,
+  body,
+  accent,
+  start,
+  top,
+}: {
+  title: string;
+  body: string;
+  accent: string;
+  start: number;
+  top: number;
+}) => {
+  const frame = useCurrentFrame();
+  const p = fade(frame, start, 20);
+
+  return (
+    <Card
+      style={{
+        position: 'absolute',
+        left: 72,
+        right: 72,
+        top,
+        padding: '30px 34px',
+        opacity: p,
+        transform: `translateY(${y(p, 36)}px)`,
+      }}
+    >
+      <div style={{display: 'flex', gap: 22, alignItems: 'flex-start'}}>
+        <div
+          style={{
+            width: 18,
+            height: 78,
+            borderRadius: 12,
+            background: accent,
+            boxShadow: `0 0 34px ${accent}55`,
+          }}
+        />
+        <div>
+          <div style={{fontSize: 36, color: colors.ink, fontWeight: 920}}>{title}</div>
+          <div style={{fontSize: 26, color: colors.muted, marginTop: 8, lineHeight: 1.28}}>
+            {body}
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+const TrustScene = () => {
+  const frame = useCurrentFrame();
+  const opacity = scene(frame, 306, 402);
+
+  return (
+    <AbsoluteFill style={{opacity, fontFamily: font}}>
+      <Caption
+        eyebrow="WHAT YOU GET"
+        title={
+          <>
+            More discipline.
+            <br />
+            Less second guessing.
+          </>
+        }
+        body="Use it as a decision filter before you commit risk."
+        start={314}
+      />
+      <Benefit
+        title="Risk-first dashboard"
+        body="NO TRADE is treated as a useful state, not a failure."
+        accent={colors.red}
+        start={338}
+        top={650}
+      />
+      <Benefit
+        title="Manual context stays in your hands"
+        body="POC, VAH, VAL, OI walls, max pain, news, and expiry can be updated by the trader."
+        accent={colors.amber}
+        start={354}
+        top={828}
+      />
+      <Benefit
+        title="Open-source Pine workflow"
+        body="Transparent logic, TradingView alerts, and local auto-sync when you improve the script."
+        accent={colors.green}
+        start={370}
+        top={1032}
+      />
+    </AbsoluteFill>
+  );
+};
+
+const ClosingProductCard = ({progress}: {progress: number}) => (
+  <Card
+    style={{
+      position: 'absolute',
+      left: 72,
+      right: 72,
+      top: 740,
+      height: 610,
+      overflow: 'hidden',
+      opacity: progress,
+      transform: `translateY(${y(progress, 40)}px)`,
+    }}
+  >
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 290px',
+        minHeight: 92,
+        borderBottom: '1px solid rgba(255,255,255,0.12)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          paddingLeft: 30,
+          color: colors.ink,
+          fontSize: 31,
+          fontWeight: 920,
+        }}
+      >
+        NIFTY Pro v2.3
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: colors.green,
+          color: colors.bg,
+          fontSize: 28,
+          fontWeight: 940,
+        }}
+      >
+        CALL READY
+      </div>
+    </div>
+    <div style={{padding: '34px 34px 0'}}>
+      <div style={{color: colors.ink, fontSize: 43, lineHeight: 1.04, fontWeight: 940}}>
+        A TradingView decision layer
+        <br />
+        for NIFTY intraday traders.
+      </div>
+      <div
+        style={{
+          marginTop: 26,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 16,
+          width: 530,
+        }}
+      >
+        {[
+          ['States', 'CALL / PUT / WAIT / NO TRADE', colors.green],
+          ['Risk', 'VIX, volume, news, ATR', colors.red],
+          ['Context', 'VWAP, EMA, ADX/DMI, levels', colors.cyan],
+          ['Alerts', 'state transitions only', colors.amber],
+        ].map(([title, body, accent]) => (
+          <div
+            key={title}
+            style={{
+              borderRadius: 20,
+              border: `1px solid ${accent}66`,
+              background: `${accent}12`,
+              padding: '18px 18px',
+            }}
+          >
+            <div style={{color: accent, fontSize: 23, fontWeight: 920}}>{title}</div>
+            <div style={{color: colors.muted, fontSize: 19, marginTop: 6, lineHeight: 1.18}}>
+              {body}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+    <Img
+      src={staticFile('nifty_decision_map.png')}
+      style={{
+        position: 'absolute',
+        right: 30,
+        bottom: 30,
+        width: 326,
+        height: 220,
+        objectFit: 'cover',
+        borderRadius: 22,
+        border: '1px solid rgba(255,255,255,0.14)',
+        opacity: 0.68,
+      }}
+    />
+    <div
+      style={{
+        position: 'absolute',
+        right: 48,
+        bottom: 48,
+        borderRadius: 18,
+        background: 'rgba(8,13,19,0.78)',
+        border: '1px solid rgba(255,255,255,0.14)',
+        color: colors.ink,
+        padding: '12px 14px',
+        fontSize: 20,
+        fontWeight: 820,
+      }}
+    >
+      Chart context included
+    </div>
+  </Card>
+);
+
+const ClosingScene = () => {
+  const frame = useCurrentFrame();
+  const opacity = scene(frame, 386, 450, 16);
+  const title = fade(frame, 394, 24);
+  const command = fade(frame, 420, 22);
+
+  return (
+    <AbsoluteFill style={{opacity, fontFamily: font}}>
       <div
         style={{
           position: 'absolute',
           left: 72,
           top: 190,
-          width: 880,
-          color: colors.text,
-          opacity: headline,
-          transform: `translateY(${slideY(headline, 46)}px)`,
+          width: 900,
+          opacity: title,
+          transform: `translateY(${y(title, 42)}px)`,
         }}
       >
-        <div style={{fontSize: 92, fontWeight: 930, lineHeight: 0.96}}>
-          One script.
+        <div style={{fontSize: 92, lineHeight: 0.96, fontWeight: 950, color: colors.ink}}>
+          NIFTY Pro
           <br />
-          One watcher.
-          <br />
-          Zero manual copy-paste.
+          Decision Map
+        </div>
+        <div
+          style={{
+            marginTop: 28,
+            color: colors.muted,
+            fontSize: 32,
+            lineHeight: 1.28,
+            fontWeight: 640,
+            width: 750,
+          }}
+        >
+          Open-source TradingView indicator for cleaner intraday decisions.
         </div>
       </div>
+
+      <ClosingProductCard progress={fade(frame, 404, 24)} />
 
       <Card
         style={{
           position: 'absolute',
           left: 72,
           right: 72,
-          bottom: 270,
-          padding: '34px 36px',
+          bottom: 118,
+          padding: '26px 30px',
           opacity: command,
-          transform: `translateY(${slideY(command, 38)}px)`,
-        }}
-      >
-        <div style={{fontFamily: mono, color: colors.mint, fontSize: 30, lineHeight: 1.35}}>
-          scripts/watch_and_push_to_tradingview.sh
-        </div>
-        <div style={{marginTop: 20, color: colors.muted, fontSize: 27, lineHeight: 1.32}}>
-          Open-source NIFTY decision support. Built for fast iteration, not blind automation.
-        </div>
-      </Card>
-
-      <div
-        style={{
-          position: 'absolute',
-          left: 72,
-          right: 72,
-          bottom: 112,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          color: colors.muted,
-          fontSize: 24,
-          fontWeight: 700,
+          gap: 18,
         }}
       >
-        <span>github.com/mayank-srm/trading_view</span>
-        <span style={{color: colors.amber}}>Decision support only</span>
-      </div>
+        <div>
+          <div style={{color: colors.green, fontFamily: mono, fontSize: 25, fontWeight: 850}}>
+            github.com/mayank-srm/trading_view
+          </div>
+          <div style={{color: colors.muted, fontSize: 21, marginTop: 7}}>
+            Decision support only. Not financial advice.
+          </div>
+        </div>
+        <div
+          style={{
+            borderRadius: 18,
+            background: colors.amber,
+            color: colors.bg,
+            padding: '16px 18px',
+            fontSize: 22,
+            fontWeight: 930,
+          }}
+        >
+          TRY IT
+        </div>
+      </Card>
     </AbsoluteFill>
+  );
+};
+
+const ProgressBar = () => {
+  const frame = useCurrentFrame();
+  const width = interpolate(frame, [0, 449], [0, 940], clamp);
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: 70,
+        right: 70,
+        bottom: 54,
+        height: 5,
+        borderRadius: 99,
+        background: 'rgba(255,255,255,0.12)',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          width,
+          height: '100%',
+          background: `linear-gradient(90deg, ${colors.green}, ${colors.cyan}, ${colors.amber})`,
+        }}
+      />
+    </div>
   );
 };
 
 export const InstagramFeature = () => {
   return (
-    <AbsoluteFill style={{fontFamily: font}}>
-      <Background />
+    <AbsoluteFill style={{fontFamily: font, backgroundColor: colors.bg}}>
+      <ChartBackdrop />
       <Header />
-      <HeroScene />
-      <WatcherScene />
-      <PipelineScene />
+      <HookScene />
+      <FactorsScene />
+      <DecisionScene />
+      <TrustScene />
       <ClosingScene />
+      <ProgressBar />
     </AbsoluteFill>
   );
 };

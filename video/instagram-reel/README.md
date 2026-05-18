@@ -1,6 +1,6 @@
 # Instagram Reel Video
 
-Remotion composition for a vertical Instagram Reel/Story promoting the automated TradingView push workflow.
+Remotion composition for a vertical Instagram Reel/Story promoting the NIFTY Pro Decision Map indicator from an end-user trader perspective.
 
 ## Render
 
@@ -12,7 +12,7 @@ npm run render
 Output:
 
 ```text
-out/tradingview-auto-reel.mp4
+out/nifty-pro-promo-reel.mp4
 ```
 
 ## Preview
