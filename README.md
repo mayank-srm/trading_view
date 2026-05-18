@@ -105,6 +105,18 @@ The script cannot bypass TradingView confirmation dialogs. If the app asks to sa
 
 On macOS, `--paste` and `--auto` may require Accessibility permission for your terminal app because they use AppleScript keystrokes.
 
+## Instagram Reel Video
+
+The repository includes a Remotion project for a 9:16 Instagram Reel/Story video that explains the automated TradingView push workflow:
+
+```bash
+cd video/instagram-reel
+npm install
+npm run render
+```
+
+The local render output is `video/instagram-reel/out/tradingview-auto-reel.mp4`.
+
 ## Alerts
 
 The indicator includes alert conditions for:

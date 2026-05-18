@@ -16,3 +16,6 @@ dist/
 build/
 coverage/
 node_modules/
+
+# Rendered Remotion exports
+video/instagram-reel/out/
