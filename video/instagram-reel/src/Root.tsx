@@ -6,7 +6,7 @@ export const RemotionRoot = () => {
     <Composition
       id="InstagramFeature"
       component={InstagramFeature}
-      durationInFrames={450}
+      durationInFrames={900}
       fps={30}
       width={1080}
       height={1920}

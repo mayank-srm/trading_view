@@ -1,12 +1,12 @@
 {
-  "name": "nifty-pro-decision-map-reel",
+  "name": "nifty-trade-compass-reel",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "studio": "remotion studio src/index.ts",
-    "render": "remotion render src/index.ts InstagramFeature out/nifty-pro-promo-reel.mp4 --codec=h264 --pixel-format=yuv420p",
-    "still": "remotion still src/index.ts InstagramFeature out/preview-frame.png --frame=225 --scale=0.25"
+    "render": "remotion render src/index.ts InstagramFeature out/nifty-trade-compass-30s-reel.mp4 --codec=h264 --pixel-format=yuv420p",
+    "still": "remotion still src/index.ts InstagramFeature out/preview-frame.png --frame=450 --scale=0.25"
   },
   "dependencies": {
     "@remotion/cli": "4.0.462",

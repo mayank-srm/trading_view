@@ -107,7 +107,7 @@ On macOS, `--paste` and `--auto` may require Accessibility permission for your t
 
 ## Instagram Reel Video
 
-The repository includes a Remotion project for a 9:16 Instagram Reel/Story promotional video that explains what traders get from the NIFTY Pro Decision Map:
+The repository includes a Remotion project for a 30-second 9:16 Instagram Reel/Story promotional video for **NIFTY Trade Compass**, the end-user-facing name for this TradingView decision-support tool:
 
 ```bash
 cd video/instagram-reel
@@ -115,7 +115,7 @@ npm install
 npm run render
 ```
 
-The local render output is `video/instagram-reel/out/nifty-pro-promo-reel.mp4`.
+The local render output is `video/instagram-reel/out/nifty-trade-compass-30s-reel.mp4`.
 
 ## Alerts
 

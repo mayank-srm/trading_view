@@ -1,6 +1,6 @@
 # Instagram Reel Video
 
-Remotion composition for a vertical Instagram Reel/Story promoting the NIFTY Pro Decision Map indicator from an end-user trader perspective.
+Remotion composition for a 30-second vertical Instagram Reel/Story promoting **NIFTY Trade Compass**, the end-user-facing name for the NIFTY Pro Decision Map TradingView tool.
 
 ## Render
 
@@ -12,7 +12,7 @@ npm run render
 Output:
 
 ```text
-out/nifty-pro-promo-reel.mp4
+out/nifty-trade-compass-30s-reel.mp4
 ```
 
 ## Preview
@@ -25,5 +25,5 @@ npm run studio
 
 - Aspect ratio: 9:16
 - Resolution: 1080 x 1920
-- Duration: 15 seconds
+- Duration: 30 seconds
 - Frame rate: 30 fps

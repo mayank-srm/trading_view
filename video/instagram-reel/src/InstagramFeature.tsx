@@ -73,7 +73,7 @@ const Card = ({
 
 const ChartBackdrop = () => {
   const frame = useCurrentFrame();
-  const drift = interpolate(frame, [0, 450], [0, -60], clamp);
+  const drift = interpolate(frame, [0, 900], [0, -92], clamp);
   const candles = [
     [120, 104, 60, colors.green],
     [178, 116, 88, colors.red],
@@ -179,7 +179,7 @@ const Header = () => (
       color: colors.ink,
     }}
   >
-    <div style={{fontSize: 28, fontWeight: 850}}>NIFTY Pro Decision Map</div>
+    <div style={{fontSize: 28, fontWeight: 850}}>NIFTY Trade Compass</div>
     <div
       style={{
         borderRadius: 999,
@@ -461,25 +461,27 @@ const Caption = ({
 
 const HookScene = () => {
   const frame = useCurrentFrame();
-  const opacity = scene(frame, 0, 104);
+  const opacity = scene(frame, 0, 188, 24);
 
   return (
     <AbsoluteFill style={{opacity}}>
       <Caption
-        eyebrow="FOR NIFTY INTRADAY"
+        eyebrow="NEW TRADINGVIEW TOOL"
         title={
           <>
-            Know the trade state
+            Appu came up
             <br />
-            before you enter.
+            with a new
+            <br />
+            TradingView tool.
           </>
         }
-        body="Stop jumping between indicators. See the market, edge, risk, and final action in one clean TradingView panel."
+        body="Meet NIFTY Trade Compass: a decision-support panel for NIFTY intraday traders."
         start={8}
       />
       <Dashboard
         mode="wait"
-        progress={fade(frame, 36, 32)}
+        progress={fade(frame, 78, 38)}
         style={{position: 'absolute', left: 116, bottom: 158}}
       />
     </AbsoluteFill>
@@ -491,14 +493,16 @@ const FactorChip = ({
   detail,
   accent,
   index,
+  baseStart,
 }: {
   label: string;
   detail: string;
   accent: string;
   index: number;
+  baseStart: number;
 }) => {
   const frame = useCurrentFrame();
-  const p = fade(frame, 112 + index * 9, 20);
+  const p = fade(frame, baseStart + index * 12, 22);
 
   return (
     <div
@@ -522,7 +526,7 @@ const FactorChip = ({
 
 const FactorsScene = () => {
   const frame = useCurrentFrame();
-  const opacity = scene(frame, 88, 206);
+  const opacity = scene(frame, 168, 358, 24);
   const factors = [
     ['VWAP', 'value location', colors.green],
     ['EMA', 'trend alignment', colors.cyan],
@@ -538,13 +542,13 @@ const FactorsScene = () => {
         eyebrow="ONE-PLACE CHECK"
         title={
           <>
-            All the filters
+            One screen for
             <br />
-            traders actually scan.
+            the messy checklist.
           </>
         }
-        body="The dashboard compresses the noisy checklist into a readable setup state."
-        start={96}
+        body="VWAP, trend, strength, range, participation, VIX, and news risk stay readable."
+        start={180}
       />
       <div
         style={{
@@ -564,6 +568,7 @@ const FactorsScene = () => {
             detail={detail}
             accent={accent}
             index={index}
+            baseStart={238}
           />
         ))}
       </div>
@@ -629,9 +634,9 @@ const StateCard = ({
 
 const DecisionScene = () => {
   const frame = useCurrentFrame();
-  const opacity = scene(frame, 190, 322);
+  const opacity = scene(frame, 338, 586, 26);
   const dashboardMode: DashboardMode =
-    frame < 236 ? 'call' : frame < 278 ? 'wait' : 'noTrade';
+    frame < 430 ? 'call' : frame < 506 ? 'wait' : 'noTrade';
 
   return (
     <AbsoluteFill style={{opacity, fontFamily: font}}>
@@ -645,32 +650,32 @@ const DecisionScene = () => {
           </>
         }
         body="It is not trying to predict everything. It helps you avoid forcing bad entries."
-        start={198}
+        start={350}
       />
       <Dashboard
         mode={dashboardMode}
-        progress={fade(frame, 222, 26)}
+        progress={fade(frame, 440, 30)}
         style={{position: 'absolute', left: 116, top: 920, transformOrigin: 'top center'}}
       />
       <StateCard
         mode="call"
         label="Take only clean momentum"
         detail="When trend, value, strength, and risk align."
-        start={226}
+        start={394}
         top={516}
       />
       <StateCard
         mode="wait"
         label="Stay patient in mixed markets"
         detail="No edge means no forced trade."
-        start={250}
+        start={430}
         top={636}
       />
       <StateCard
         mode="noTrade"
         label="Respect risk blocks"
         detail="News, weak structure, or VIX risk stays visible."
-        start={274}
+        start={466}
         top={756}
       />
     </AbsoluteFill>
@@ -728,7 +733,7 @@ const Benefit = ({
 
 const TrustScene = () => {
   const frame = useCurrentFrame();
-  const opacity = scene(frame, 306, 402);
+  const opacity = scene(frame, 560, 750, 24);
 
   return (
     <AbsoluteFill style={{opacity, fontFamily: font}}>
@@ -742,27 +747,27 @@ const TrustScene = () => {
           </>
         }
         body="Use it as a decision filter before you commit risk."
-        start={314}
+        start={572}
       />
       <Benefit
         title="Risk-first dashboard"
         body="NO TRADE is treated as a useful state, not a failure."
         accent={colors.red}
-        start={338}
+        start={626}
         top={650}
       />
       <Benefit
         title="Manual context stays in your hands"
         body="POC, VAH, VAL, OI walls, max pain, news, and expiry can be updated by the trader."
         accent={colors.amber}
-        start={354}
+        start={656}
         top={828}
       />
       <Benefit
         title="Open-source Pine workflow"
         body="Transparent logic, TradingView alerts, and local auto-sync when you improve the script."
         accent={colors.green}
-        start={370}
+        start={686}
         top={1032}
       />
     </AbsoluteFill>
@@ -889,9 +894,9 @@ const ClosingProductCard = ({progress}: {progress: number}) => (
 
 const ClosingScene = () => {
   const frame = useCurrentFrame();
-  const opacity = scene(frame, 386, 450, 16);
-  const title = fade(frame, 394, 24);
-  const command = fade(frame, 420, 22);
+  const opacity = scene(frame, 728, 900, 24);
+  const title = fade(frame, 742, 28);
+  const command = fade(frame, 830, 26);
 
   return (
     <AbsoluteFill style={{opacity, fontFamily: font}}>
@@ -908,7 +913,7 @@ const ClosingScene = () => {
         <div style={{fontSize: 92, lineHeight: 0.96, fontWeight: 950, color: colors.ink}}>
           NIFTY Pro
           <br />
-          Decision Map
+          Trade Compass
         </div>
         <div
           style={{
@@ -920,11 +925,11 @@ const ClosingScene = () => {
             width: 750,
           }}
         >
-          Open-source TradingView indicator for cleaner intraday decisions.
+          A TradingView decision layer for cleaner NIFTY intraday trading.
         </div>
       </div>
 
-      <ClosingProductCard progress={fade(frame, 404, 24)} />
+      <ClosingProductCard progress={fade(frame, 784, 30)} />
 
       <Card
         style={{
@@ -967,7 +972,7 @@ const ClosingScene = () => {
 
 const ProgressBar = () => {
   const frame = useCurrentFrame();
-  const width = interpolate(frame, [0, 449], [0, 940], clamp);
+  const width = interpolate(frame, [0, 899], [0, 940], clamp);
 
   return (
     <div
