@@ -54,6 +54,24 @@ Recommended starting point:
 trading-setups/nifty_pro_decision_map_v2_indicator.pine
 ```
 
+## Push To TradingView
+
+Use the helper script to copy the latest Pine file and open TradingView:
+
+```bash
+scripts/push_to_tradingview.sh
+```
+
+To paste into the app after you have opened and focused the Pine Editor:
+
+```bash
+scripts/push_to_tradingview.sh --paste
+```
+
+The script does not auto-save or publish inside TradingView. Review the pasted code, then save/apply it from the TradingView UI.
+
+On macOS, `--paste` may require Accessibility permission for your terminal app because it uses AppleScript keystrokes after you focus the Pine Editor.
+
 ## Alerts
 
 The indicator includes alert conditions for:

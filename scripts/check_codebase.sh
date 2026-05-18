@@ -5,11 +5,12 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INDICATOR="$ROOT/trading-setups/nifty_pro_decision_map_v2_indicator.pine"
 IMAGE="$ROOT/trading-setups/nifty_decision_map.png"
 README="$ROOT/README.md"
+TRADINGVIEW_PUSH="$ROOT/scripts/push_to_tradingview.sh"
 
 require_literal() {
   local file="$1"
   local literal="$2"
-  if ! grep -Fq "$literal" "$file"; then
+  if ! grep -Fq -- "$literal" "$file"; then
     echo "Missing expected text in ${file#$ROOT/}: $literal" >&2
     exit 1
   fi
@@ -18,7 +19,7 @@ require_literal() {
 reject_literal() {
   local file="$1"
   local literal="$2"
-  if grep -Fq "$literal" "$file"; then
+  if grep -Fq -- "$literal" "$file"; then
     echo "Unexpected text in ${file#$ROOT/}: $literal" >&2
     exit 1
   fi
@@ -86,8 +87,16 @@ reject_line_contains "$INDICATOR" 'blockText =' 'volumeUsable and not volumeSpik
 
 require_literal "$README" 'trading-setups/nifty_pro_decision_map_v2_indicator.pine'
 require_literal "$README" 'trading-setups/nifty_decision_map.png'
+require_literal "$README" 'scripts/push_to_tradingview.sh'
 require_literal "$README" 'static historical level-map reference'
 require_literal "$README" 'not automatic `NO TRADE` blockers'
+require_literal "$TRADINGVIEW_PUSH" 'pbcopy'
+require_literal "$TRADINGVIEW_PUSH" '--paste'
+require_literal "$TRADINGVIEW_PUSH" 'Pine Editor'
+if [[ ! -x "$TRADINGVIEW_PUSH" ]]; then
+  echo "TradingView push helper must be executable: ${TRADINGVIEW_PUSH#$ROOT/}" >&2
+  exit 1
+fi
 readme_setup_refs="$(grep -o 'trading-setups/[^`[:space:])]*' "$README" | sort -u || true)"
 while IFS= read -r readme_ref; do
   [[ -z "$readme_ref" ]] && continue
