@@ -88,10 +88,14 @@ reject_line_contains "$INDICATOR" 'blockText =' 'volumeUsable and not volumeSpik
 require_literal "$README" 'trading-setups/nifty_pro_decision_map_v2_indicator.pine'
 require_literal "$README" 'trading-setups/nifty_decision_map.png'
 require_literal "$README" 'scripts/push_to_tradingview.sh'
+require_literal "$README" 'scripts/push_to_tradingview.sh --auto'
 require_literal "$README" 'static historical level-map reference'
 require_literal "$README" 'not automatic `NO TRADE` blockers'
 require_literal "$TRADINGVIEW_PUSH" 'pbcopy'
 require_literal "$TRADINGVIEW_PUSH" '--paste'
+require_literal "$TRADINGVIEW_PUSH" '--auto'
+require_literal "$TRADINGVIEW_PUSH" '--editor-click'
+require_literal "$TRADINGVIEW_PUSH" 'send_shortcut'
 require_literal "$TRADINGVIEW_PUSH" 'Pine Editor'
 if [[ ! -x "$TRADINGVIEW_PUSH" ]]; then
   echo "TradingView push helper must be executable: ${TRADINGVIEW_PUSH#$ROOT/}" >&2

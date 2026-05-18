@@ -68,9 +68,29 @@ To paste into the app after you have opened and focused the Pine Editor:
 scripts/push_to_tradingview.sh --paste
 ```
 
-The script does not auto-save or publish inside TradingView. Review the pasted code, then save/apply it from the TradingView UI.
+For the no-prompt macOS flow when TradingView is already open and the Pine Editor is focused:
 
-On macOS, `--paste` may require Accessibility permission for your terminal app because it uses AppleScript keystrokes after you focus the Pine Editor.
+```bash
+scripts/push_to_tradingview.sh --auto
+```
+
+Use `--auto --open` if you also want the script to open the configured chart URL before pasting.
+
+If the Pine Editor is not already focused, pass a screen coordinate to click before pasting:
+
+```bash
+scripts/push_to_tradingview.sh --auto --editor-click 720,820
+```
+
+By default, `--auto` pastes, sends `command+s`, then sends `command+return`. Override those if your TradingView shortcuts differ:
+
+```bash
+scripts/push_to_tradingview.sh --auto --save-shortcut command+s --apply-shortcut command+return
+```
+
+The script cannot bypass TradingView confirmation dialogs. If the app asks to save, apply, or replace a script, approve it in TradingView.
+
+On macOS, `--paste` and `--auto` may require Accessibility permission for your terminal app because they use AppleScript keystrokes.
 
 ## Alerts
 
