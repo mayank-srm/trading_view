@@ -260,7 +260,7 @@ atrExpanding = not na(atrAvg) and atr >= atrAvg
 
 volumeUsable = not na(sourceVolume) and sourceVolume > 0 and not na(volAvg) and volAvg > 0
 volumeSpike = volumeUsable and sourceVolume > volAvg * volumeSpikeMult
-volumeGate = volumeSpike or (not volumeUsable and allowNoVolumeSignals)
+volumeGate = volumeUsable or (not volumeUsable and allowNoVolumeSignals)
 
 vixUsable = not na(vixClose) and vixClose > 0
 vixChangePct = vixUsable and not na(vixPrev) and vixPrev > 0 ? ((vixClose - vixPrev) / vixPrev) * 100.0 : na
@@ -299,8 +299,10 @@ callAtrT3 = close + atr * target3Atr
 putAtrT1 = close - atr * target1Atr
 putAtrT2 = close - atr * target2Atr
 putAtrT3 = close - atr * target3Atr
-callTarget = f_nearest_above(close, sessionHigh, pdh, vah, callWall, pain, poc, callAtrT1)
-putTarget = f_nearest_below(close, sessionLow, pdl, val, putWall, pain, poc, putAtrT1)
+callSessionTarget = not newCashSession ? sessionHigh[1] : na
+putSessionTarget = not newCashSession ? sessionLow[1] : na
+callTarget = f_nearest_above(close, callSessionTarget, pdh, vah, callWall, pain, poc, callAtrT1)
+putTarget = f_nearest_below(close, putSessionTarget, pdl, val, putWall, pain, poc, putAtrT1)
 callRisk = not na(callStop) ? close - callStop : na
 putRisk = not na(putStop) ? putStop - close : na
 callRoom = not na(callTarget) ? callTarget - close : na
@@ -358,7 +360,7 @@ callSignalCandidate = confirmed and callScore >= readyScore and callEdgeLocked a
 putSignalCandidate = confirmed and putScore >= readyScore and putEdgeLocked and volumeGate and putKeyLevel and not newsPutBlock
 rrBlock = (callSignalCandidate and not callRROk) or (putSignalCandidate and not putRROk)
 oiBlock = (callSignalCandidate and nearCallWall and not callWallBreak) or (putSignalCandidate and nearPutWall and not putWallBreak)
-noTradeOverride = sessionBlock or eventMode or openBlock or closeBlock or adxHardBlock or atrDead or vwapExtended or vixSpikeRisk or vixLowRisk or expiryBlock or newsBlock or rrBlock or oiBlock
+noTradeOverride = sessionBlock or eventMode or openBlock or closeBlock or adxHardBlock or atrDead or expiryBlock or newsBlock or rrBlock or oiBlock
 edgeState = noTradeOverride ? "None" : edgeGap < minEdgeGap ? "None" : callEdgeLocked ? "CALL" : putEdgeLocked ? "PUT" : "None"
 
 callSetupRaw = confirmed and edgeState == "CALL" and callScore >= readyScore and callEligible and volumeGate and callKeyLevel and not newsCallBlock
@@ -388,7 +390,9 @@ marketPoor = sessionBlock or eventMode or openBlock or closeBlock or adxHardBloc
 marketRisky = not marketPoor and (vwapExtended or vixSpikeRisk or vixLowRisk or expiryBlock or newsRisk or rrBlock or oiBlock or vwapFlat or emaTangled or (volumeUsable and not volumeSpike))
 marketText = marketPoor ? "Poor" : marketRisky ? "Risky" : "Tradable"
 
-blockText = f_reasons(sessionBlock or eventMode or newsRisk or newsBlock, sessionBlock ? "Session" : newsActive ? "News" : "Event", openBlock, "Open", closeBlock, "Close", adxHardBlock, "ADX", atrDead, "ATR", vwapExtended, "Extended", vixSpikeRisk or vixLowRisk, "VIX", volumeUsable and not volumeSpike, "Volume", emaTangled, "EMA", rrBlock, "RR", oiBlock, "OI", edgeState == "None" and edgeGap < minEdgeGap, "No edge", "Clear")
+hardBlockText = f_reasons(sessionBlock or eventMode or newsBlock, sessionBlock ? "Session" : newsActive ? "News" : "Event", openBlock, "Open", closeBlock, "Close", adxHardBlock, "ADX", atrDead, "ATR", expiryBlock, "Expiry", rrBlock, "RR", oiBlock, "OI", false, "", false, "", false, "", false, "", "Clear")
+riskText = f_reasons(vwapExtended, "Extended", vixSpikeRisk or vixLowRisk, "VIX", volumeUsable and not volumeSpike, "Volume", vwapFlat, "VWAP flat", emaTangled, "EMA", newsRisk, "News", edgeState == "None" and edgeGap < minEdgeGap, "No edge", false, "", false, "", false, "", false, "", false, "", "Clear")
+blockText = state == "NO TRADE" ? hardBlockText : riskText
 
 callBlockRaw = f_reasons(not aboveVwap, "Below VWAP", vwapFlat, "VWAP flat", emaTangled, "EMA tangled", not emaBull and not emaTangled, "EMA weak", not dmiBull, "-DI", callEdgeScore < minSideEdge, "Edge weak", not volumeGate, "Weak volume", newsCallBlock, "News", nearCallWall and not callWallBreak, "CALL wall", not callKeyLevel, "No key level", not callRROk, "RR weak", edgeState != "CALL", "No edge", "Inactive")
 callBlockText = callBlockRaw == "Inactive" ? "Inactive" : "Blocked - " + callBlockRaw
@@ -400,7 +404,7 @@ callDisplay = edgeState == "CALL" and callScore >= watchScore ? str.tostring(cal
 putDisplay = edgeState == "PUT" and putScore >= watchScore ? str.tostring(putScore) + "/100 RR " + (na(putRR) ? "N/A" : str.tostring(putRR, "#.0")) : edgeState == "CALL" ? "Inactive" : putBlockText
 callQuick = str.tostring(callScore) + "/100 RR " + (na(callRR) ? "N/A" : str.tostring(callRR, "#.0"))
 putQuick = str.tostring(putScore) + "/100 RR " + (na(putRR) ? "N/A" : str.tostring(putRR, "#.0"))
-checkText = state == "CALL READY" ? "CALL " + callQuick : state == "PUT READY" ? "PUT " + putQuick : state == "NO TRADE" ? "NO TRADE - " + blockText : edgeState == "None" ? "WAIT - No edge" : "WAIT - " + edgeState + " watch"
+checkText = state == "CALL READY" ? "CALL " + callQuick : state == "PUT READY" ? "PUT " + putQuick : state == "NO TRADE" ? "NO TRADE - " + hardBlockText : edgeState == "None" ? "WAIT - No edge" : "WAIT - " + edgeState + " watch"
 checkColor = state == "CALL READY" ? color.lime : state == "PUT READY" ? color.red : state == "NO TRADE" ? color.orange : color.silver
 
 plot(showAverages ? vwapValue : na, "VWAP", color=color.new(color.purple, 0), linewidth=2)

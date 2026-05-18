@@ -14,6 +14,8 @@ This repository intentionally keeps one primary script: the v2.3 NIFTY Pro Decis
 
 ![NIFTY decision map](trading-setups/nifty_decision_map.png)
 
+This is a static historical level-map reference for visual context, not live market levels and not a screenshot of the v2.3 dashboard.
+
 ## Included Files
 
 | File | Purpose |
@@ -35,6 +37,7 @@ This repository intentionally keeps one primary script: the v2.3 NIFTY Pro Decis
 - Prefer confirmed candle-close signals over intrabar noise.
 - Use VWAP, EMA, ADX/DMI, ATR, volume, and manual option-chain levels together.
 - Treat `WAIT` and `NO TRADE` as first-class states, not failures.
+- Treat VWAP extension, VIX risk, and weak volume as risk warnings and score penalties, not automatic `NO TRADE` blockers.
 - Keep news and event risk manual so the trader stays responsible for context.
 
 ## How To Use

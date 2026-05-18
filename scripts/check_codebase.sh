@@ -24,14 +24,32 @@ reject_literal() {
   fi
 }
 
+reject_line_contains() {
+  local file="$1"
+  local line_prefix="$2"
+  local forbidden="$3"
+  if grep -F "$line_prefix" "$file" | grep -Fq "$forbidden"; then
+    echo "Unexpected text on ${line_prefix} line in ${file#$ROOT/}: $forbidden" >&2
+    exit 1
+  fi
+}
+
 setup_file_list="$(find "$ROOT/trading-setups" -maxdepth 1 -type f | sort)"
-allowed_setup_files="$(printf '%s\n%s\n' "$IMAGE" "$INDICATOR" | sort)"
-if [[ "$setup_file_list" != "$allowed_setup_files" ]]; then
-  echo "Expected trading-setups to contain only the kept indicator and image asset." >&2
-  printf 'Found:\n' >&2
-  printf '%s\n' "$setup_file_list" | sed "s#^$ROOT/#  #" >&2
+if [[ ! -f "$IMAGE" ]]; then
+  echo "Missing expected image asset: ${IMAGE#$ROOT/}" >&2
   exit 1
 fi
+
+while IFS= read -r setup_file; do
+  [[ -z "$setup_file" ]] && continue
+  case "$setup_file" in
+    "$INDICATOR"|*.png|*.jpg|*.jpeg|*.webp) ;;
+    *)
+      echo "Unexpected non-image asset in trading-setups: ${setup_file#$ROOT/}" >&2
+      exit 1
+      ;;
+  esac
+done <<< "$setup_file_list"
 
 pine_list="$(find "$ROOT/trading-setups" -maxdepth 1 -type f -name '*.pine' | sort)"
 pine_count="$(printf '%s\n' "$pine_list" | sed '/^$/d' | wc -l | tr -d ' ')"
@@ -44,6 +62,10 @@ fi
 
 require_literal "$INDICATOR" 'sessionBlock = not inCashSession'
 require_literal "$INDICATOR" 'noTradeOverride = sessionBlock or eventMode'
+require_literal "$INDICATOR" 'riskText = f_reasons(vwapExtended, "Extended"'
+require_literal "$INDICATOR" 'hardBlockText = f_reasons(sessionBlock or eventMode or newsBlock'
+require_literal "$INDICATOR" 'callSessionTarget = not newCashSession ? sessionHigh[1] : na'
+require_literal "$INDICATOR" 'putSessionTarget = not newCashSession ? sessionLow[1] : na'
 require_literal "$INDICATOR" 'callReadyAlert = stateChanged and state == "CALL READY"'
 require_literal "$INDICATOR" 'putReadyAlert = stateChanged and state == "PUT READY"'
 require_literal "$INDICATOR" 'callReadyTransition = showTransitionMarkers and callReadyAlert'
@@ -56,16 +78,31 @@ reject_literal "$INDICATOR" 'emaSpreadAtr'
 reject_literal "$INDICATOR" 'adxPulse'
 reject_literal "$INDICATOR" 'atrRatio'
 reject_literal "$INDICATOR" 'conflict ='
+reject_line_contains "$INDICATOR" 'noTradeOverride =' 'vwapExtended'
+reject_line_contains "$INDICATOR" 'noTradeOverride =' 'vixSpikeRisk'
+reject_line_contains "$INDICATOR" 'noTradeOverride =' 'vixLowRisk'
+reject_line_contains "$INDICATOR" 'blockText =' 'vwapExtended'
+reject_line_contains "$INDICATOR" 'blockText =' 'volumeUsable and not volumeSpike'
 
 require_literal "$README" 'trading-setups/nifty_pro_decision_map_v2_indicator.pine'
 require_literal "$README" 'trading-setups/nifty_decision_map.png'
+require_literal "$README" 'static historical level-map reference'
+require_literal "$README" 'not automatic `NO TRADE` blockers'
 readme_setup_refs="$(grep -o 'trading-setups/[^`[:space:])]*' "$README" | sort -u || true)"
-expected_readme_refs="$(printf '%s\n%s\n' 'trading-setups/nifty_decision_map.png' 'trading-setups/nifty_pro_decision_map_v2_indicator.pine' | sort)"
-if [[ "$readme_setup_refs" != "$expected_readme_refs" ]]; then
-  echo "README should reference only the kept TradingView script and image." >&2
-  printf 'Found README trading-setups references:\n' >&2
-  printf '%s\n' "$readme_setup_refs" | sed 's/^/  /' >&2
-  exit 1
-fi
+while IFS= read -r readme_ref; do
+  [[ -z "$readme_ref" ]] && continue
+  readme_ref_file="$ROOT/$readme_ref"
+  case "$readme_ref_file" in
+    "$INDICATOR"|*.png|*.jpg|*.jpeg|*.webp) ;;
+    *)
+      echo "README references an unsupported trading-setups file: $readme_ref" >&2
+      exit 1
+      ;;
+  esac
+  if [[ ! -f "$readme_ref_file" ]]; then
+    echo "README references a missing file: $readme_ref" >&2
+    exit 1
+  fi
+done <<< "$readme_setup_refs"
 
 echo "Codebase checks passed."
