@@ -88,6 +88,19 @@ By default, `--auto` pastes, sends `command+s`, then sends `command+return`. Ove
 scripts/push_to_tradingview.sh --auto --save-shortcut command+s --apply-shortcut command+return
 ```
 
+For a complete automated loop while you edit locally, keep TradingView open and run the watcher:
+
+```bash
+scripts/watch_and_push_to_tradingview.sh
+```
+
+It pushes once immediately, then pushes again every time the Pine file changes. If the Pine Editor is not already focused, give the watcher a click target or editor shortcut:
+
+```bash
+scripts/watch_and_push_to_tradingview.sh --editor-click 720,820
+scripts/watch_and_push_to_tradingview.sh --open-editor-shortcut option+p
+```
+
 The script cannot bypass TradingView confirmation dialogs. If the app asks to save, apply, or replace a script, approve it in TradingView.
 
 On macOS, `--paste` and `--auto` may require Accessibility permission for your terminal app because they use AppleScript keystrokes.

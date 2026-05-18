@@ -6,6 +6,7 @@ INDICATOR="$ROOT/trading-setups/nifty_pro_decision_map_v2_indicator.pine"
 IMAGE="$ROOT/trading-setups/nifty_decision_map.png"
 README="$ROOT/README.md"
 TRADINGVIEW_PUSH="$ROOT/scripts/push_to_tradingview.sh"
+TRADINGVIEW_WATCH="$ROOT/scripts/watch_and_push_to_tradingview.sh"
 
 require_literal() {
   local file="$1"
@@ -89,6 +90,7 @@ require_literal "$README" 'trading-setups/nifty_pro_decision_map_v2_indicator.pi
 require_literal "$README" 'trading-setups/nifty_decision_map.png'
 require_literal "$README" 'scripts/push_to_tradingview.sh'
 require_literal "$README" 'scripts/push_to_tradingview.sh --auto'
+require_literal "$README" 'scripts/watch_and_push_to_tradingview.sh'
 require_literal "$README" 'static historical level-map reference'
 require_literal "$README" 'not automatic `NO TRADE` blockers'
 require_literal "$TRADINGVIEW_PUSH" 'pbcopy'
@@ -99,6 +101,13 @@ require_literal "$TRADINGVIEW_PUSH" 'send_shortcut'
 require_literal "$TRADINGVIEW_PUSH" 'Pine Editor'
 if [[ ! -x "$TRADINGVIEW_PUSH" ]]; then
   echo "TradingView push helper must be executable: ${TRADINGVIEW_PUSH#$ROOT/}" >&2
+  exit 1
+fi
+require_literal "$TRADINGVIEW_WATCH" 'scripts/push_to_tradingview.sh --auto'
+require_literal "$TRADINGVIEW_WATCH" 'fswatch'
+require_literal "$TRADINGVIEW_WATCH" '--editor-click'
+if [[ ! -x "$TRADINGVIEW_WATCH" ]]; then
+  echo "TradingView watch helper must be executable: ${TRADINGVIEW_WATCH#$ROOT/}" >&2
   exit 1
 fi
 readme_setup_refs="$(grep -o 'trading-setups/[^`[:space:])]*' "$README" | sort -u || true)"
