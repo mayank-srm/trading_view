@@ -6,21 +6,27 @@
 
 Open-source TradingView Pine Script indicator for NIFTY intraday decision support.
 
-This repository intentionally keeps one primary script: the v2.3 NIFTY Pro Decision Map indicator. It is the most complete version of the project and combines market-quality filters, directional edge scoring, manual option-chain context, event/news risk, dashboard states, and alerts.
+This repository intentionally keeps one primary script: the v2.3 NIFTY Pro Decision Map indicator. It also keeps the chart image asset for quick visual context.
 
 > This project is for education and decision support only. It is not financial advice, a trade recommendation service, or an automated trading system.
 
-## Included File
+## Preview
+
+![NIFTY decision map](trading-setups/nifty_decision_map.png)
+
+## Included Files
 
 | File | Purpose |
 | --- | --- |
 | `trading-setups/nifty_pro_decision_map_v2_indicator.pine` | Main TradingView indicator with dashboard states, alerts, risk blocks, and manual market context inputs. |
+| `trading-setups/nifty_decision_map.png` | Visual decision-map reference image. |
 
 ## Why This One
 
 - It is the most complete indicator in the project.
 - It includes the dashboard, alerts, and risk-state logic in one place.
 - It avoids keeping older setup-specific scripts that can confuse users.
+- It keeps image context without keeping duplicate scripts.
 - It is decision support only and does not place trades.
 
 ## Core Ideas

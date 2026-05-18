@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INDICATOR="$ROOT/trading-setups/nifty_pro_decision_map_v2_indicator.pine"
+IMAGE="$ROOT/trading-setups/nifty_decision_map.png"
 README="$ROOT/README.md"
 
 require_literal() {
@@ -24,9 +25,9 @@ reject_literal() {
 }
 
 setup_file_list="$(find "$ROOT/trading-setups" -maxdepth 1 -type f | sort)"
-setup_file_count="$(printf '%s\n' "$setup_file_list" | sed '/^$/d' | wc -l | tr -d ' ')"
-if [[ "$setup_file_count" != "1" || "$setup_file_list" != "$INDICATOR" ]]; then
-  echo "Expected trading-setups to contain only: trading-setups/nifty_pro_decision_map_v2_indicator.pine" >&2
+allowed_setup_files="$(printf '%s\n%s\n' "$IMAGE" "$INDICATOR" | sort)"
+if [[ "$setup_file_list" != "$allowed_setup_files" ]]; then
+  echo "Expected trading-setups to contain only the kept indicator and image asset." >&2
   printf 'Found:\n' >&2
   printf '%s\n' "$setup_file_list" | sed "s#^$ROOT/#  #" >&2
   exit 1
@@ -57,9 +58,11 @@ reject_literal "$INDICATOR" 'atrRatio'
 reject_literal "$INDICATOR" 'conflict ='
 
 require_literal "$README" 'trading-setups/nifty_pro_decision_map_v2_indicator.pine'
+require_literal "$README" 'trading-setups/nifty_decision_map.png'
 readme_setup_refs="$(grep -o 'trading-setups/[^`[:space:])]*' "$README" | sort -u || true)"
-if [[ "$readme_setup_refs" != "trading-setups/nifty_pro_decision_map_v2_indicator.pine" ]]; then
-  echo "README should reference only the kept TradingView script." >&2
+expected_readme_refs="$(printf '%s\n%s\n' 'trading-setups/nifty_decision_map.png' 'trading-setups/nifty_pro_decision_map_v2_indicator.pine' | sort)"
+if [[ "$readme_setup_refs" != "$expected_readme_refs" ]]; then
+  echo "README should reference only the kept TradingView script and image." >&2
   printf 'Found README trading-setups references:\n' >&2
   printf '%s\n' "$readme_setup_refs" | sed 's/^/  /' >&2
   exit 1
