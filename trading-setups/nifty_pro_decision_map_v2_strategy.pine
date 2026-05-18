@@ -25,6 +25,7 @@ dmiLen = input.int(14, "DMI length", minval=1, group=groupAdx, display=display.n
 adxSmooth = input.int(14, "ADX smoothing", minval=1, group=groupAdx, display=display.none)
 adxHardMin = input.float(16.0, "ADX hard no-trade below", minval=1, step=0.5, group=groupAdx, display=display.none)
 adxMin = input.float(20.0, "ADX trade minimum", minval=1, step=0.5, group=groupAdx, display=display.none)
+strongAdx = input.float(25.0, "Strong ADX", minval=1, step=0.5, group=groupAdx, display=display.none)
 adxStableTolerance = input.float(0.3, "ADX stable tolerance", minval=0, step=0.1, group=groupAdx, display=display.none)
 
 groupVol = "Volatility and volume"
@@ -123,10 +124,6 @@ f_rr(float room, float risk) =>
 f_clamp(float value, float floorVal, float ceilingVal) =>
     na(value) ? floorVal : math.max(floorVal, math.min(ceilingVal, value))
 
-f_rr_points(float rr, float minRR) =>
-    float safeMinRR = math.max(minRR, 0.1)
-    na(rr) ? 0.0 : rr >= safeMinRR ? 7.0 + f_clamp((rr - safeMinRR) / safeMinRR, 0.0, 1.0) * 3.0 : f_clamp(rr / safeMinRR, 0.0, 1.0) * 5.0
-
 sessionStart = timestamp(syminfo.timezone, year(time), month(time), dayofmonth(time), cashStartHour, cashStartMinute)
 sessionEnd = timestamp(syminfo.timezone, year(time), month(time), dayofmonth(time), cashEndHour, cashEndMinute)
 inCashSession = time >= sessionStart and time < sessionEnd
@@ -214,6 +211,7 @@ putWallBreak = not na(putWall) and f_crossed_below(putWall) and volumeGate
 
 openBlock = inCashSession and minutesFromOpen >= 0 and minutesFromOpen < noTradeAfterOpenMin
 closeBlock = inCashSession and minutesToClose >= 0 and minutesToClose < noTradeBeforeCloseMin
+sessionBlock = not inCashSession
 expiryBlock = expiryMode and (not adxTradeOk or not volumeSpike)
 
 callBreakLevel = f_crossed_above(vwapValue) or f_crossed_above(pdh) or f_crossed_above(orbHigh) or f_crossed_above(sessionHigh[1]) or f_crossed_above(vah) or callWallBreak
@@ -239,15 +237,11 @@ callRROk = not na(callRR) and callRR >= minRewardRisk
 putRROk = not na(putRR) and putRR >= minRewardRisk
 
 atrSafe = math.max(nz(atr, 0.0), syminfo.mintick)
-vwapDistanceAtr = not na(vwapValue) ? math.abs(close - vwapValue) / atrSafe : 0.0
-emaSpreadAtr = math.abs(emaFast - emaSlow) / atrSafe
 diTotal = math.max(nz(diPlus) + nz(diMinus), 1.0)
 dmiBullStrength = dmiBull ? f_clamp((diPlus - diMinus) / diTotal, 0.0, 1.0) : 0.0
 dmiBearStrength = dmiBear ? f_clamp((diMinus - diPlus) / diTotal, 0.0, 1.0) : 0.0
-adxStrength = f_clamp((adx - adxHardMin) / math.max(25.0 - adxHardMin, 1.0), 0.0, 1.0)
-adxPulse = adxRisingOrStable ? 1.0 : 0.55
+adxStrength = f_clamp((adx - adxHardMin) / math.max(strongAdx - adxHardMin, 1.0), 0.0, 1.0)
 volRatio = volumeUsable ? sourceVolume / volAvg : na
-atrRatio = not na(atrAvg) and atrAvg > 0 ? atr / atrAvg : na
 emaTangled = math.abs(emaFast - emaSlow) <= atrSafe * 0.15
 
 vwapSlopeUp = not vwapFlat and not na(vwapValue[vwapFlatLookback]) and vwapValue > vwapValue[vwapFlatLookback]
@@ -267,7 +261,7 @@ marketAdxPts = adxTradeOk ? 7.0 + adxStrength * 3.0 : adxHardBlock ? 0.0 : adxSt
 marketAtrPts = atrValid ? atr >= atrAvg ? 10.0 : 7.0 : 0.0
 marketVolumePts = volumeUsable ? volumeSpike ? 10.0 : sourceVolume >= volAvg ? 6.0 : f_clamp(volRatio, 0.0, 1.0) * 4.0 : allowNoVolumeSignals ? 5.0 : 0.0
 marketVixPts = not useVixRisk or not vixUsable ? 3.0 : vixSpikeRisk ? 0.0 : vixLowRisk ? 2.0 : 5.0
-marketTimePts = eventMode or openBlock or closeBlock ? 0.0 : 5.0
+marketTimePts = sessionBlock or eventMode or openBlock or closeBlock ? 0.0 : 5.0
 marketQualityRaw = marketAdxPts + marketAtrPts + marketVolumePts + marketVixPts + marketTimePts - newsQualityPenalty
 marketQualityScore = int(math.round(f_clamp(marketQualityRaw, 0.0, 40.0)))
 
@@ -291,7 +285,7 @@ callSignalCandidate = confirmed and callScore >= readyScore and callEdgeLocked a
 putSignalCandidate = confirmed and putScore >= readyScore and putEdgeLocked and volumeGate and putKeyLevel and not newsPutBlock
 rrBlock = (callSignalCandidate and not callRROk) or (putSignalCandidate and not putRROk)
 oiBlock = (callSignalCandidate and nearCallWall and not callWallBreak) or (putSignalCandidate and nearPutWall and not putWallBreak)
-noTradeOverride = eventMode or openBlock or closeBlock or adxHardBlock or atrDead or vwapExtended or vixSpikeRisk or vixLowRisk or expiryBlock or newsBlock or rrBlock or oiBlock
+noTradeOverride = sessionBlock or eventMode or openBlock or closeBlock or adxHardBlock or atrDead or vwapExtended or vixSpikeRisk or vixLowRisk or expiryBlock or newsBlock or rrBlock or oiBlock
 edgeState = noTradeOverride ? "None" : edgeGap < minEdgeGap ? "None" : callEdgeLocked ? "CALL" : putEdgeLocked ? "PUT" : "None"
 
 callSetupRaw = confirmed and edgeState == "CALL" and callScore >= readyScore and callEligible and volumeGate and callKeyLevel and not newsCallBlock
@@ -303,7 +297,7 @@ stateCode = state == "CALL READY" ? 1 : state == "PUT READY" ? -1 : state == "NO
 stateChanged = confirmed and stateCode != nz(stateCode[1], stateCode)
 callEntry = stateChanged and state == "CALL READY"
 putEntry = stateChanged and state == "PUT READY"
-marketPoor = eventMode or openBlock or closeBlock or adxHardBlock or atrDead or newsBlock
+marketPoor = sessionBlock or eventMode or openBlock or closeBlock or adxHardBlock or atrDead or newsBlock
 marketRisky = not marketPoor and (vwapExtended or vixSpikeRisk or vixLowRisk or expiryBlock or newsRisk or rrBlock or oiBlock or vwapFlat or emaTangled or (volumeUsable and not volumeSpike))
 marketText = marketPoor ? "Poor" : marketRisky ? "Risky" : "Tradable"
 newsStatus = not newsImpactMode ? "off" : newsImpact <= 0 ? "idle" : newsBlock ? "block" : newsRisk ? "risk" : "watch"

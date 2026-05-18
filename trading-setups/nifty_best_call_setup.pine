@@ -36,6 +36,12 @@ callTrigger = ta.barssince(close <= breakout1) >= confirmBars - 1 and callMoment
 callConfirm = ta.barssince(close <= breakout2) >= confirmBars - 1 and callMomentum
 putBreak = ta.barssince(close >= supportNear) >= confirmBars - 1 and putMomentum
 rejectCallZone = high >= breakout1 and close < breakout1 and putMomentum
+confirmed = barstate.isconfirmed
+earlyCall = callTrigger and not callConfirm
+earlyCallAlert = confirmed and earlyCall and not earlyCall[1]
+strongCallAlert = confirmed and callConfirm and not callConfirm[1]
+putBreakAlert = confirmed and putBreak and not putBreak[1]
+rejectCallAlert = confirmed and rejectCallZone and not rejectCallZone[1]
 
 bias =
      close > trendRes ? "BULL TREND" :
@@ -80,7 +86,7 @@ bgcolor(close > supportNear and close < breakout1 ? zoneColor : na, title="No-tr
 bgcolor(callConfirm ? color.new(color.lime, 88) : callTrigger ? color.new(color.aqua, 88) : na, title="Call zone")
 bgcolor(putBreak or rejectCallZone ? color.new(color.red, 88) : na, title="Put zone")
 
-plotshape(callTrigger and not callConfirm, title="Early CALL", style=shape.triangleup, color=callColor, text="CALL?", size=size.tiny, location=location.belowbar)
+plotshape(earlyCall, title="Early CALL", style=shape.triangleup, color=callColor, text="CALL?", size=size.tiny, location=location.belowbar)
 plotshape(callConfirm, title="Strong CALL", style=shape.triangleup, color=callColor, text="CALL", size=size.small, location=location.belowbar)
 plotshape(putBreak, title="PUT breakdown", style=shape.triangledown, color=putColor, text="PUT", size=size.small, location=location.abovebar)
 plotshape(rejectCallZone, title="PUT rejection", style=shape.triangledown, color=color.orange, text="REJ", size=size.tiny, location=location.abovebar)
@@ -102,7 +108,7 @@ if barstate.islast
     table.cell(dash, 0, 6, "Best TF", text_color=color.white)
     table.cell(dash, 1, 6, "30m bias, 5m trigger", text_color=color.aqua)
 
-alertcondition(callTrigger, "NIFTY early CALL", "NIFTY is holding above CALL trigger with momentum.")
-alertcondition(callConfirm, "NIFTY strong CALL", "NIFTY confirmed above CALL confirmation level.")
-alertcondition(putBreak, "NIFTY PUT breakdown", "NIFTY broke below immediate support with bearish momentum.")
-alertcondition(rejectCallZone, "NIFTY rejection PUT scalp", "NIFTY rejected CALL trigger zone with bearish momentum.")
+alertcondition(earlyCallAlert, "NIFTY early CALL", "NIFTY is holding above CALL trigger with momentum.")
+alertcondition(strongCallAlert, "NIFTY strong CALL", "NIFTY confirmed above CALL confirmation level.")
+alertcondition(putBreakAlert, "NIFTY PUT breakdown", "NIFTY broke below immediate support with bearish momentum.")
+alertcondition(rejectCallAlert, "NIFTY rejection PUT scalp", "NIFTY rejected CALL trigger zone with bearish momentum.")

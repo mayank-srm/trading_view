@@ -150,10 +150,6 @@ f_rr(float room, float risk) =>
 f_clamp(float value, float floorVal, float ceilingVal) =>
     na(value) ? floorVal : math.max(floorVal, math.min(ceilingVal, value))
 
-f_rr_points(float rr, float minRR) =>
-    float safeMinRR = math.max(minRR, 0.1)
-    na(rr) ? 0.0 : rr >= safeMinRR ? 7.0 + f_clamp((rr - safeMinRR) / safeMinRR, 0.0, 1.0) * 3.0 : f_clamp(rr / safeMinRR, 0.0, 1.0) * 5.0
-
 f_reasons(bool c1, string r1, bool c2, string r2, bool c3, string r3, bool c4, string r4, bool c5, string r5, bool c6, string r6, bool c7, string r7, bool c8, string r8, bool c9, string r9, bool c10, string r10, bool c11, string r11, bool c12, string r12, string fallback) =>
     string outText = ""
     int count = 0
@@ -285,6 +281,7 @@ putWallBreak = not na(putWall) and f_crossed_below(putWall) and volumeGate
 
 openBlock = inCashSession and minutesFromOpen >= 0 and minutesFromOpen < noTradeAfterOpenMin
 closeBlock = inCashSession and minutesToClose >= 0 and minutesToClose < noTradeBeforeCloseMin
+sessionBlock = not inCashSession
 expiryBlock = expiryMode and (not adxTradeOk or not volumeSpike)
 
 callBreakLevel = f_crossed_above(vwapValue) or f_crossed_above(pdh) or f_crossed_above(orbHigh) or f_crossed_above(sessionHigh[1]) or f_crossed_above(vah) or callWallBreak
@@ -314,15 +311,11 @@ callRROk = not na(callRR) and callRR >= minRewardRisk
 putRROk = not na(putRR) and putRR >= minRewardRisk
 
 atrSafe = math.max(nz(atr, 0.0), syminfo.mintick)
-vwapDistanceAtr = not na(vwapValue) ? math.abs(close - vwapValue) / atrSafe : 0.0
-emaSpreadAtr = math.abs(emaFast - emaSlow) / atrSafe
 diTotal = math.max(nz(diPlus) + nz(diMinus), 1.0)
 dmiBullStrength = dmiBull ? f_clamp((diPlus - diMinus) / diTotal, 0.0, 1.0) : 0.0
 dmiBearStrength = dmiBear ? f_clamp((diMinus - diPlus) / diTotal, 0.0, 1.0) : 0.0
 adxStrength = f_clamp((adx - adxHardMin) / math.max(strongAdx - adxHardMin, 1.0), 0.0, 1.0)
-adxPulse = adxRisingOrStable ? 1.0 : 0.55
 volRatio = volumeUsable ? sourceVolume / volAvg : na
-atrRatio = not na(atrAvg) and atrAvg > 0 ? atr / atrAvg : na
 
 vwapSlopeUp = not vwapFlat and not na(vwapValue[vwapFlatLookback]) and vwapValue > vwapValue[vwapFlatLookback]
 vwapSlopeDown = not vwapFlat and not na(vwapValue[vwapFlatLookback]) and vwapValue < vwapValue[vwapFlatLookback]
@@ -341,7 +334,7 @@ marketAdxPts = adxTradeOk ? 7.0 + adxStrength * 3.0 : adxHardBlock ? 0.0 : adxSt
 marketAtrPts = atrValid ? atrExpanding ? 10.0 : 7.0 : 0.0
 marketVolumePts = volumeUsable ? volumeSpike ? 10.0 : sourceVolume >= volAvg ? 6.0 : f_clamp(volRatio, 0.0, 1.0) * 4.0 : allowNoVolumeSignals ? 5.0 : 0.0
 marketVixPts = not useVixRisk or not vixUsable ? 3.0 : vixSpikeRisk ? 0.0 : vixLowRisk ? 2.0 : 5.0
-marketTimePts = eventMode or openBlock or closeBlock ? 0.0 : 5.0
+marketTimePts = sessionBlock or eventMode or openBlock or closeBlock ? 0.0 : 5.0
 marketQualityRaw = marketAdxPts + marketAtrPts + marketVolumePts + marketVixPts + marketTimePts - newsQualityPenalty
 marketQualityScore = int(math.round(f_clamp(marketQualityRaw, 0.0, 40.0)))
 
@@ -365,9 +358,8 @@ callSignalCandidate = confirmed and callScore >= readyScore and callEdgeLocked a
 putSignalCandidate = confirmed and putScore >= readyScore and putEdgeLocked and volumeGate and putKeyLevel and not newsPutBlock
 rrBlock = (callSignalCandidate and not callRROk) or (putSignalCandidate and not putRROk)
 oiBlock = (callSignalCandidate and nearCallWall and not callWallBreak) or (putSignalCandidate and nearPutWall and not putWallBreak)
-noTradeOverride = eventMode or openBlock or closeBlock or adxHardBlock or atrDead or vwapExtended or vixSpikeRisk or vixLowRisk or expiryBlock or newsBlock or rrBlock or oiBlock
+noTradeOverride = sessionBlock or eventMode or openBlock or closeBlock or adxHardBlock or atrDead or vwapExtended or vixSpikeRisk or vixLowRisk or expiryBlock or newsBlock or rrBlock or oiBlock
 edgeState = noTradeOverride ? "None" : edgeGap < minEdgeGap ? "None" : callEdgeLocked ? "CALL" : putEdgeLocked ? "PUT" : "None"
-conflict = not noTradeOverride and edgeGap < minEdgeGap and (callScore >= watchScore or putScore >= watchScore)
 
 callSetupRaw = confirmed and edgeState == "CALL" and callScore >= readyScore and callEligible and volumeGate and callKeyLevel and not newsCallBlock
 putSetupRaw = confirmed and edgeState == "PUT" and putScore >= readyScore and putEligible and volumeGate and putKeyLevel and not newsPutBlock
@@ -376,9 +368,12 @@ putReady = not noTradeOverride and putSetupRaw and putRROk
 state = noTradeOverride ? "NO TRADE" : callReady ? "CALL READY" : putReady ? "PUT READY" : "WAIT"
 stateCode = state == "CALL READY" ? 1 : state == "PUT READY" ? -1 : state == "NO TRADE" ? 2 : 0
 stateChanged = confirmed and stateCode != nz(stateCode[1], stateCode)
-callReadyTransition = showTransitionMarkers and stateChanged and state == "CALL READY"
-putReadyTransition = showTransitionMarkers and stateChanged and state == "PUT READY"
-noTradeTransition = stateChanged and state == "NO TRADE"
+callReadyAlert = stateChanged and state == "CALL READY"
+putReadyAlert = stateChanged and state == "PUT READY"
+noTradeAlert = stateChanged and state == "NO TRADE"
+callReadyTransition = showTransitionMarkers and callReadyAlert
+putReadyTransition = showTransitionMarkers and putReadyAlert
+noTradeTransition = noTradeAlert
 
 biasText = aboveVwap and emaBull ? "Bullish" : belowVwap and emaBear ? "Bearish" : "Neutral"
 vwapText = aboveVwap ? (vwapFlat ? "Above flat" : "Above") : belowVwap ? (vwapFlat ? "Below flat" : "Below") : "At VWAP"
@@ -389,11 +384,11 @@ volText = volumeUsable ? (volumeSpike ? "Spike" : "Weak") : "N/A"
 vixText = vixUsable ? str.tostring(vixClose, "#.0") + (vixSpikeRisk ? " risk" : vixClose <= vixLow ? " low" : " ok") : "N/A"
 newsStatus = not newsImpactMode ? "off" : newsImpact <= 0 ? "idle" : newsBlock ? "block" : newsRisk ? "risk" : "watch"
 newsText = newsImpactMode ? str.tostring(newsImpact) + " " + newsBias + " " + newsStatus : "Manual off"
-marketPoor = eventMode or openBlock or closeBlock or adxHardBlock or atrDead or newsBlock
+marketPoor = sessionBlock or eventMode or openBlock or closeBlock or adxHardBlock or atrDead or newsBlock
 marketRisky = not marketPoor and (vwapExtended or vixSpikeRisk or vixLowRisk or expiryBlock or newsRisk or rrBlock or oiBlock or vwapFlat or emaTangled or (volumeUsable and not volumeSpike))
 marketText = marketPoor ? "Poor" : marketRisky ? "Risky" : "Tradable"
 
-blockText = f_reasons(eventMode or newsRisk or newsBlock, newsActive ? "News" : "Event", openBlock, "Open", closeBlock, "Close", adxHardBlock, "ADX", atrDead, "ATR", vwapExtended, "Extended", vixSpikeRisk or vixLowRisk, "VIX", volumeUsable and not volumeSpike, "Volume", emaTangled, "EMA", rrBlock, "RR", oiBlock, "OI", edgeState == "None" and edgeGap < minEdgeGap, "No edge", "Clear")
+blockText = f_reasons(sessionBlock or eventMode or newsRisk or newsBlock, sessionBlock ? "Session" : newsActive ? "News" : "Event", openBlock, "Open", closeBlock, "Close", adxHardBlock, "ADX", atrDead, "ATR", vwapExtended, "Extended", vixSpikeRisk or vixLowRisk, "VIX", volumeUsable and not volumeSpike, "Volume", emaTangled, "EMA", rrBlock, "RR", oiBlock, "OI", edgeState == "None" and edgeGap < minEdgeGap, "No edge", "Clear")
 
 callBlockRaw = f_reasons(not aboveVwap, "Below VWAP", vwapFlat, "VWAP flat", emaTangled, "EMA tangled", not emaBull and not emaTangled, "EMA weak", not dmiBull, "-DI", callEdgeScore < minSideEdge, "Edge weak", not volumeGate, "Weak volume", newsCallBlock, "News", nearCallWall and not callWallBreak, "CALL wall", not callKeyLevel, "No key level", not callRROk, "RR weak", edgeState != "CALL", "No edge", "Inactive")
 callBlockText = callBlockRaw == "Inactive" ? "Inactive" : "Blocked - " + callBlockRaw
@@ -509,7 +504,7 @@ if barstate.islast
             table.cell(dash, 0, row, "")
             table.cell(dash, 1, row, "")
 
-alertcondition(callReadyTransition, "NIFTY v2.3 CALL READY", "NIFTY Pro Decision Map v2.3: CALL READY on confirmed candle.")
-alertcondition(putReadyTransition, "NIFTY v2.3 PUT READY", "NIFTY Pro Decision Map v2.3: PUT READY on confirmed candle.")
+alertcondition(callReadyAlert, "NIFTY v2.3 CALL READY", "NIFTY Pro Decision Map v2.3: CALL READY on confirmed candle.")
+alertcondition(putReadyAlert, "NIFTY v2.3 PUT READY", "NIFTY Pro Decision Map v2.3: PUT READY on confirmed candle.")
 alertcondition(noTradeTransition, "NIFTY v2.3 NO TRADE", "NIFTY Pro Decision Map v2.3: NO TRADE override active.")
 alertcondition(stateChanged, "NIFTY v2.3 State changed", "NIFTY Pro Decision Map v2.3: dashboard state changed.")
