@@ -16,6 +16,61 @@ This repository intentionally keeps one primary script: the v2.3 NIFTY Pro Decis
 
 This is a static historical level-map reference for visual context, not live market levels and not a screenshot of the v2.3 dashboard.
 
+## Install In 60 Seconds
+
+This TradingView tool is easiest to install manually. You do not need to install Node, Python, or any developer tools.
+
+1. Open [`trading-setups/nifty_pro_decision_map_v2_indicator.pine`](trading-setups/nifty_pro_decision_map_v2_indicator.pine).
+2. Click **Raw** on GitHub.
+3. Select all and copy the script.
+4. Open **TradingView**.
+5. Open your **NIFTY** chart.
+6. Open **Pine Editor**.
+7. Delete any old editor text and paste the copied script.
+8. Click **Save**.
+9. Name it `NIFTY Trade Compass`.
+10. Click **Add to chart**.
+
+That is it. The dashboard should appear on the chart.
+
+## Easiest Updates
+
+When this repository gets a new version, repeat the same copy-paste steps:
+
+1. Open the Pine file from this repo.
+2. Copy the latest script.
+3. Paste it into the same TradingView Pine Editor script.
+4. Click **Save**.
+5. Click **Update on chart**.
+
+TradingView does not provide an official public API for fully publishing or updating Pine scripts from GitHub. Final save, update, and publish confirmations still happen inside TradingView.
+
+## One-Command Mac Helper
+
+If you are on macOS and already use Terminal, this repo includes helper scripts.
+
+First-time setup:
+
+```bash
+git clone https://github.com/mayank-srm/trading_view.git
+cd trading_view
+scripts/push_to_tradingview.sh --paste
+```
+
+Fast update when TradingView is already open and Pine Editor is focused:
+
+```bash
+scripts/push_to_tradingview.sh --auto
+```
+
+Auto-sync while editing locally:
+
+```bash
+scripts/watch_and_push_to_tradingview.sh
+```
+
+If macOS asks for Accessibility permission, allow it for your terminal app. The helper needs that permission to paste, save, and apply inside TradingView.
+
 ## Included Files
 
 | File | Purpose |
@@ -40,13 +95,11 @@ This is a static historical level-map reference for visual context, not live mar
 - Treat VWAP extension, VIX risk, and weak volume as risk warnings and score penalties, not automatic `NO TRADE` blockers.
 - Keep news and event risk manual so the trader stays responsible for context.
 
-## How To Use
+## How To Use After Install
 
-1. Open TradingView and create a new Pine Script.
-2. Copy `trading-setups/nifty_pro_decision_map_v2_indicator.pine` into the Pine Editor.
-3. Save the script and add it to a NIFTY chart.
-4. Update the manual inputs under `One-place trading check` before or during the session.
-5. Use the dashboard state as a filter, not as a blind entry signal.
+1. Open the indicator settings in TradingView.
+2. Update the manual inputs under `One-place trading check` before or during the session.
+3. Use the dashboard state as a filter, not as a blind entry signal.
 
 Recommended starting point:
 
@@ -54,7 +107,7 @@ Recommended starting point:
 trading-setups/nifty_pro_decision_map_v2_indicator.pine
 ```
 
-## Push To TradingView
+## Advanced Push To TradingView
 
 Use the helper script to copy the latest Pine file and open TradingView:
 
